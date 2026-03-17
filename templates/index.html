@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Attendance OS - Responsive</title>
+    <style>
+        :root {
+            --bg: #05070a; --card: #0f172a; --primary: #00f2ff;
+            --accent: #7000ff; --text: #e2e8f0; --subtext: #94a3b8;
+            --success: #00ff88; --danger: #ff0055; --leave: #f1c40f;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); color: var(--text); 
+            margin: 0; padding: 10px; padding-bottom: 90px;
+        }
+        
+        .container { max-width: 1200px; margin: auto; }
+
+        /* Header Layout: Flexible for Mobile */
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin: 10px 0 20px 0; padding: 15px; 
+            background: var(--card); border-radius: 15px; border: 1px solid #1e293b; 
+            flex-wrap: wrap; gap: 15px;
+        }
+
+        .toggle-group { display: flex; background: #000; padding: 4px; border-radius: 10px; border: 1px solid #1e293b; }
+        .toggle-btn { 
+            border: none; padding: 8px 16px; border-radius: 8px; 
+            cursor: pointer; background: transparent; color: var(--subtext); 
+            font-weight: bold; font-size: 0.9rem;
+        }
+        .toggle-btn.active { background: var(--primary); color: #000; }
+
+        /* Subject Stats: Grid adjusts per screen size */
+        .subject-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+            gap: 8px; margin-bottom: 20px; 
+        }
+        .sub-card { 
+            background: var(--card); padding: 10px; border-radius: 10px; 
+            text-align: center; border: 1px solid #1e293b;
+        }
+        .sub-perc { font-size: 1.1rem; font-weight: 800; color: var(--primary); display: block; }
+
+        /* Table Wrapper for Horizontal Scroll on Mobile */
+        .table-wrap { 
+            background: var(--card); border-radius: 15px; 
+            overflow-x: auto; border: 1px solid #1e293b;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll for iOS */
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 750px; } /* Ensures readability on mobile */
+        th { background: #000; padding: 12px 8px; font-size: 0.7rem; color: var(--primary); position: sticky; top: 0; }
+        td { padding: 10px 5px; text-align: center; border-bottom: 1px solid #1e293b; }
+        
+        /* Interactive Elements */
+        .leave-select { 
+            background: #000; color: var(--leave); border: 1px solid #334155; 
+            border-radius: 4px; font-size: 0.65rem; padding: 4px; width: 100%; 
+        }
+        .row-cl { background: rgba(241, 196, 15, 0.05) !important; }
+        .row-ml { background: rgba(0, 242, 255, 0.05) !important; }
+        .today-row { border: 2px solid var(--primary) !important; background: rgba(0, 242, 255, 0.03); }
+
+        /* Larger Checkboxes for Touch Screens */
+        input[type="checkbox"] { 
+            appearance: none; width: 26px; height: 26px; 
+            border: 2px solid #334155; border-radius: 6px; 
+            cursor: pointer; display: inline-grid; place-content: center;
+        }
+        input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+        input[type="checkbox"]:checked::before { content: "✔"; color: #000; font-size: 16px; font-weight: 900; }
+        input[type="checkbox"]:disabled { opacity: 0.1; }
+
+        .badge { font-weight: 800; padding: 4px 6px; border-radius: 5px; font-size: 0.75rem; background: #000; }
+
+        /* Mobile Action Buttons */
+        .jump-btn { 
+            position: fixed; bottom: 20px; right: 20px; 
+            background: var(--primary); color: #000; border: none; 
+            width: 55px; height: 55px; border-radius: 50%; 
+            font-size: 24px; box-shadow: 0 4px 15px rgba(0,242,255,0.4); z-index: 100;
+        }
+
+        /* PC Specific Hover Animations */
+        @media (min-width: 768px) {
+            .sub-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+            input[type="checkbox"]:hover { border-color: var(--primary); }
+        }
+    </style>
+</head>
+<body>
+
+<button class="jump-btn" onclick="scrollToToday()">📅</button>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1 style="margin:0; font-size: 1.1rem; color: var(--primary)">ATTENDANCE v4.5</h1>
+            <small id="dateDisplay" style="color:var(--subtext)"></small>
+        </div>
+        
+        <div class="toggle-group">
+            <button id="btnC1" class="toggle-btn active" onclick="switchSection('C1')">C1</button>
+            <button id="btnC2" class="toggle-btn" onclick="switchSection('C2')">C2</button>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+            <button onclick="exportData()" style="padding:8px 12px; background:#1e293b; color:white; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer;">Backup</button>
+        </div>
+    </div>
+
+    <div class="subject-grid" id="statsPanel"></div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>DATE</th>
+                    <th>I</th><th>II</th><th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th>
+                    <th>%</th>
+                </tr>
+            </thead>
+            <tbody id="trackerTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let currentSection = 'C1';
+    const startDate = new Date(2026, 2, 16);
+    const endDate = new Date(2026, 3, 30);
+    const todayStr = new Date().toDateString();
+
+    document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+
+    const timetable = (day, sec) => {
+        const s = {
+            'Mon': ['BCE', 'EM-II', 'PHY', 'BME', 'LIB', sec === 'C1' ? 'CAMD' : 'MPW', sec === 'C1' ? 'CAMD' : 'MPW'],
+            'Tue': ['BCE', 'EM-II', 'PHY', 'CS', 'LIB', sec === 'C2' ? 'CAMD' : 'MPW', sec === 'C2' ? 'CAMD' : 'MPW'],
+            'Wed': ['BCE', 'EM-II', 'PHY', sec === 'C2' ? 'BCE Lab' : 'PHY Lab', sec === 'C1' ? 'PHY Lab' : 'BCE Lab', 'LIB', 'CS'],
+            'Thu': ['BME', 'EM-II', 'PHY', 'CS', 'CRT', 'LANG', 'LANG'],
+            'Fri': ['BME', 'EM-II', 'PHY', 'CRT', 'CRT', sec === 'C1' ? 'BCE Lab' : 'PHY Lab', sec === 'C2' ? 'PHY Lab' : 'BCE Lab']
+        };
+        return s[day] || null;
+    };
+
+    function switchSection(sec) {
+        currentSection = sec;
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn'+sec).classList.add('active');
+        render();
+    }
+
+    function render() {
+        const tbody = document.getElementById('trackerTable');
+        tbody.innerHTML = '';
+        let curr = new Date(startDate);
+
+        while (curr <= endDate) {
+            const dKey = curr.toISOString().split('T')[0];
+            const dName = curr.toLocaleDateString('en-GB', { weekday: 'short' });
+            const schedule = timetable(dName, currentSection);
+            const isToday = curr.toDateString() === todayStr;
+            const leaveType = localStorage.getItem(`${currentSection}-${dKey}-leave`) || 'none';
+
+            const row = document.createElement('tr');
+            if (isToday) row.classList.add('today-row');
+            if (leaveType !== 'none') row.classList.add('row-' + leaveType);
+
+            let cells = `<td>
+                <b style="font-size:0.9rem">${curr.getDate()} ${curr.toLocaleDateString('en-GB',{month:'short'})}</b><br>
+                <select class="leave-select" onchange="setLeave('${dKey}', this.value)">
+                    <option value="none" ${leaveType==='none'?'selected':''}>Normal</option>
+                    <option value="cl" ${leaveType==='cl'?'selected':''}>CL</option>
+                    <option value="ml" ${leaveType==='ml'?'selected':''}>ML</option>
+                </select>
+            </td>`;
+            
+            for (let i = 0; i < 7; i++) {
+                const sub = schedule ? schedule[i] : 'OFF';
+                const sKey = `${currentSection}-${dKey}-s${i}`;
+                const checked = localStorage.getItem(sKey) === 'true' ? 'checked' : '';
+                const disabled = (leaveType !== 'none' || !schedule) ? 'disabled' : '';
+                
+                cells += `<td>
+                    <div style="font-size:0.5rem; color:var(--subtext); margin-bottom:4px">${sub}</div>
+                    <input type="checkbox" data-sub="${sub}" ${checked} ${disabled} onchange="save('${dKey}', ${i}, this.checked)">
+                </td>`;
+            }
+            cells += `<td><span id="p-${dKey}" class="badge">0%</span></td>`;
+            row.innerHTML = cells;
+            tbody.appendChild(row);
+            updateRowPerc(dKey);
+            curr.setDate(curr.getDate() + 1);
+        }
+        updateGlobalStats();
+    }
+
+    function setLeave(date, type) {
+        localStorage.setItem(`${currentSection}-${date}-leave`, type);
+        render();
+    }
+
+    function save(date, slot, val) {
+        localStorage.setItem(`${currentSection}-${date}-s${slot}`, val);
+        updateRowPerc(date);
+        updateGlobalStats();
+    }
+
+    function updateRowPerc(date) {
+        const leave = localStorage.getItem(`${currentSection}-${date}-leave`) || 'none';
+        const el = document.getElementById(`p-${date}`);
+        if (leave !== 'none') { el.innerText = "EXMPT"; return; }
+        
+        const checks = Array.from(document.querySelectorAll(`input[onchange*="${date}"]`));
+        if (checks.length === 0 || checks[0].disabled) { el.innerText = "-"; return; }
+        const p = Math.round((checks.filter(c => c.checked).length / checks.length) * 100);
+        el.innerText = p + "%";
+    }
+
+    function updateGlobalStats() {
+        const subs = ['BCE', 'EM-II', 'PHY', 'BME', 'CS', 'CAMD', 'MPW', 'BCE Lab', 'PHY Lab', 'CRT', 'LANG'];
+        const panel = document.getElementById('statsPanel');
+        panel.innerHTML = '';
+        
+        subs.forEach(s => {
+            const allPossible = Array.from(document.querySelectorAll(`input[data-sub="${s}"]`));
+            const activeCheckboxes = allPossible.filter(c => !c.disabled);
+            if (activeCheckboxes.length > 0) {
+                const p = Math.round((activeCheckboxes.filter(c => c.checked).length / activeCheckboxes.length) * 100);
+                panel.innerHTML += `<div class="sub-card"><span style="font-size:0.6rem">${s}</span><span class="sub-perc">${p}%</span></div>`;
+            }
+        });
+    }
+
+    function scrollToToday() {
+        const todayRow = document.querySelector('.today-row');
+        if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function exportData() {
+        const blob = new Blob([JSON.stringify(localStorage)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `attendance_backup.json`;
+        a.click();
+    }
+
+    render();
+    setTimeout(scrollToToday, 800);
+</script>
+</body>
+</html>
